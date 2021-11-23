@@ -10,11 +10,11 @@ export interface InitParams {
     sFacotry: ethers.Contract;
     uFoctory: ethers.Contract;
     WETH: ethers.Contract;
-    arbitrage: ethers.Contract;
     tokenOtherAddresses: string[];
-    fundingWallet: ethers.Wallet;
-    fundingAmount: string;
-    gasPriceOracle: GasPriceOracle;
+    arbitrage?: ethers.Contract | undefined;
+    fundingWallet?: ethers.Wallet | undefined;
+    fundingAmount?: string | undefined;
+    gasPriceOracle?: GasPriceOracle | undefined;
 }
 
 export class ArbitrageManager {
@@ -22,11 +22,11 @@ export class ArbitrageManager {
     readonly sFacotry: ethers.Contract;
     readonly uFoctory: ethers.Contract;
     readonly WETH: ethers.Contract;
-    readonly arbitrage: ethers.Contract;
     readonly tokenOtherAddresses: string[];
-    readonly fundingWallet: ethers.Wallet;
-    readonly fundingAmount: string;
-    readonly gasPriceOracle: GasPriceOracle;
+    readonly arbitrage: ethers.Contract | undefined;
+    readonly fundingWallet: ethers.Wallet | undefined;
+    readonly fundingAmount: string | undefined;
+    readonly gasPriceOracle: GasPriceOracle | undefined;
     readonly state: {
         symbols: Map<string, string>,
         decimals: Map<String, any>,
@@ -40,8 +40,8 @@ export class ArbitrageManager {
         this.sFacotry = initParams.sFacotry;
         this.uFoctory = initParams.uFoctory;
         this.WETH = initParams.WETH;
-        this.arbitrage = initParams.arbitrage;
         this.tokenOtherAddresses = initParams.tokenOtherAddresses;
+        this.arbitrage = initParams.arbitrage;
         this.fundingWallet = initParams.fundingWallet;
         this.fundingAmount = initParams.fundingAmount;
         this.gasPriceOracle = initParams.gasPriceOracle;
@@ -113,22 +113,36 @@ export class ArbitrageManager {
     }
 
     async getSushiswapToUniswapEstimateGas(params: any, amountEth: BigNumber) {
-        return await this.arbitrage.estimateGas.sushiswapToUniswap(params, {value: amountEth});
+        if (this.arbitrage) {
+            return await this.arbitrage.estimateGas.sushiswapToUniswap(params, {value: amountEth});
+        }
+        return BigNumber.from(0);
     }
 
     async getUniswapToSushiswapEstimateGas(params: any, amountEth: BigNumber) {
-        return await this.arbitrage.estimateGas.uniswapToSushiswap(params, {value: amountEth});
+        if (this.arbitrage) {
+            return await this.arbitrage.estimateGas.uniswapToSushiswap(params, {value: amountEth});
+        }
+        return BigNumber.from(0);
     }
 
     async getSushiswapToUniswapResponse(params: any, amountEth: BigNumber) {
-        return await this.arbitrage.sushiswapToUniswap(params, {value: amountEth});
+        if (this.arbitrage) {
+            return await this.arbitrage.sushiswapToUniswap(params, {value: amountEth});
+        }
     }
 
     async getUniswapToSushiswapResponse(params: any, amountEth: BigNumber) {
-        return await this.arbitrage.uniswapToSushiswap(params, {value: amountEth});
+        if (this.arbitrage) {
+            return await this.arbitrage.uniswapToSushiswap(params, {value: amountEth});
+        }
     }
 
     private async doArbitrage(blockNumber: any, otherAddress: string, profit: number, sPrice: number, uPrice: number, uFee: number) {
+        if (!this.fundingWallet || !this.fundingAmount || !this.gasPriceOracle) {
+            console.log(`!env setup is not complete, cant not execute arbitrage!`)
+            return;
+        }
         const gasPrices = await this.gasPriceOracle.gasPrices();
         const fastGasPrice = gasPrices.fast;
         const symbolOther = this.getSymbol(otherAddress);
@@ -182,7 +196,7 @@ export class ArbitrageManager {
         const tokenOther = this.erc20(otherAddress, ERC20.abi);
         const symbolOther = await tokenOther.symbol();
         this.state.symbols.set(otherAddress, symbolOther);
-        console.log("--------------------------")
+        console.log("--------------------------");
         console.log(`token address ${otherAddress} map to symbol ${symbolOther}`);
         const wethAddress = this.WETH.address;
         const sPairAddress = await this.sFacotry.getPair(wethAddress, otherAddress);
