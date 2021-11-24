@@ -30,7 +30,7 @@ npm install
 ```
 npx hardhat test
 ```
-![执行结果](images/hardhat_test.png)
+![执行结果](images/hardhat_test_result.png)
 ## 5 关于exec-arbitrage.ts
 ### 5.1 在以太坊主网执行价格订阅
 #### 在项目根目录新建.env文件，配置内容如下，注意需要配置正确的INFRA_PROJECT_ID
