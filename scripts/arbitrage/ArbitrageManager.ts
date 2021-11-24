@@ -67,7 +67,7 @@ export class ArbitrageManager {
             uPrice = this.getUPrice(otherAddress);
             uFee = this.getUFee(otherAddress);
             if (sPrice && uPrice && uFee) {
-                const newProfit = calculateProfit(sPrice, uPrice, uPrice);
+                const newProfit = calculateProfit(sPrice, uPrice, uFee);
                 if (newProfit > profit) {
                     profit = newProfit;
                 }
